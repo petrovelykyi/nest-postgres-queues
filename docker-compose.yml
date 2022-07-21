@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: backend-api
+    image: backend-api
+    tty: true
+    restart: always
+    depends_on:
+      - database
+      - redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    networks:
+      - public
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DB_HOST: database
+      REDIS_HOST: redis
+    command: npm run start:prod
+  database:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:alpine
+    restart: always
+    ports:
+      - '5432:5432'
+    networks:
+      - public
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    command: redis-server --save 60 1 --requirepass sOmE_sEcUrE_pAsS
+    networks:
+      - public
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      REDIS_HOSTS: redis
+      REDIS_HOST: redis
+      REDIS_PORT: redis:6379
+      REDIS_PASSWORD: sOmE_sEcUrE_pAsS
+      HTTP_USER: root
+      HTTP_PASSWORD: root
+    ports:
+      - '8081:8081'
+    networks:
+      - public
+networks:
+  public:
+    name: public
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: dockerpublic
